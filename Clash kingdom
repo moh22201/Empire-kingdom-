@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Kingdom Battle</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  margin:0;
+  background:#111;
+  font-family:Arial,sans-serif;
+  overflow:hidden;
+  touch-action:none;
+}
+
+#game{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  max-width:600px;
+  margin:auto;
+  overflow:hidden;
+  background:
+    linear-gradient(#5b9d45 0 48%,#3f7e37 48% 52%,#5b9d45 52%);
+}
+
+/* الساحة */
+#arena{
+  position:absolute;
+  inset:0 0 130px 0;
+}
+
+/* النهر */
+#river{
+  position:absolute;
+  top:48%;
+  height:4%;
+  width:100%;
+  background:#278bc4;
+  border-top:3px solid #8ed5f5;
+  border-bottom:3px solid #176a99;
+}
+
+/* الجسر */
+.bridge{
+  position:absolute;
+  top:45%;
+  width:22%;
+  height:10%;
+  background:#9b693e;
+  border:3px solid #694326;
+  border-radius:8px;
+}
+#bridge1{left:14%}
+#bridge2{right:14%}
+
+/* الأبراج */
+.tower{
+  position:absolute;
+  width:72px;
+  height:82px;
+  background:linear-gradient(#eee,#aaa);
+  border:5px solid #555;
+  border-radius:12px 12px 5px 5px;
+  text-align:center;
+  z-index:5;
+  box-shadow:0 5px 10px #2228;
+}
+
+.tower .roof{
+  position:absolute;
+  top:-22px;
+  left:8px;
+  width:46px;
+  height:28px;
+  background:#b52b2b;
+  border:3px solid #721717;
+  clip-path:polygon(50% 0,100% 100%,0 100%);
+}
+
+.hp{
+  position:absolute;
+  top:-13px;
+  left:4px;
+  width:58px;
+  height:7px;
+  background:#222;
+  border-radius:5px;
+  overflow:hidden;
+}
+
+.hp span{
+  display:block;
+  height:100%;
+  background:#32e65a;
+  width:100%;
+}
+
+.tower b{
+  position:relative;
+  top:25px;
+  font-size:28px;
+}
+
+#enemyKing{top:4%;left:calc(50% - 36px)}
+#enemyLeft{top:18%;left:7%}
+#enemyRight{top:18%;right:7%}
+
+#myKing{bottom:4%;left:calc(50% - 36px)}
+#myLeft{bottom:18%;left:7%}
+#myRight{bottom:18%;right:7%}
+
+/* الوحدات */
+.unit{
+  position:absolute;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:3px solid #222;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  z-index:10;
+  transition:left .2s,top .2s;
+  box-shadow:0 3px 6px #0008;
+}
+
+.player{
+  background:#3f8cff;
+}
+
+.enemy{
+  background:#e84646;
+}
+
+.unit .unitHp{
+  position:absolute;
+  top:-7px;
+  left:2px;
+  width:36px;
+  height:5px;
+  background:#222;
+}
+
+.unit .unitHp span{
+  display:block;
+  height:100%;
+  background:#4cff63;
+}
+
+/* الواجهة */
+#topUI{
+  position:absolute;
+  top:8px;
+  left:8px;
+  right:8px;
+  display:flex;
+  justify-content:space-between;
+  z-index:30;
+  color:white;
+}
+
+.info{
+  background:#0009;
+  padding:8px 12px;
+  border-radius:12px;
+  font-weight:bold;
+}
+
+/* البطاقات */
+#cards{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:130px;
+  background:linear-gradient(#292929,#111);
+  border-top:3px solid #555;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  padding:10px;
+  z-index:40;
+}
+
+.card{
+  width:70px;
+  height:105px;
+  background:linear-gradient(#eee,#aaa);
+  border:3px solid #d6a928;
+  border-radius:10px;
+  text-align:center;
+  position:relative;
+  color:#111;
+  font-weight:bold;
+}
+
+.card .emoji{
+  font-size:38px;
+  margin-top:10px;
+}
+
+.card .cost{
+  position:absolute;
+  top:2px;
+  left:3px;
+  background:#8e35d6;
+  color:white;
+  width:23px;
+  height:23px;
+  border-radius:50%;
+  line-height:23px;
+}
+
+.card small{
+  display:block;
+  margin-top:3px;
+}
+
+.card.selected{
+  transform:translateY(-8px);
+  border-color:#fff;
+  box-shadow:0 0 15px #fff;
+}
+
+/* الإكسير */
+#elixirBox{
+  position:absolute;
+  bottom:136px;
+  left:10px;
+  right:10px;
+  height:24px;
+  background:#222;
+  border:2px solid #8d42d8;
+  border-radius:12px;
+  overflow:hidden;
+  z-index:45;
+}
+
+#elixir{
+  height:100%;
+  width:50%;
+  background:linear-gradient(90deg,#8e2bd1,#d56cff);
+}
+
+#elixirText{
+  position:absolute;
+  width:100%;
+  text-align:center;
+  top:1px;
+  color:white;
+  font-weight:bold;
+  font-size:14px;
+}
+
+/* رسالة */
+#message{
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:white;
+  font-size:34px;
+  font-weight:bold;
+  text-shadow:0 3px 5px #000;
+  z-index:100;
+  display:none;
+}
+
+/* زر إعادة */
+#restart{
+  display:none;
+  position:absolute;
+  top:58%;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:101;
+  background:#d4a52c;
+  border:0;
+  padding:14px 30px;
+  border-radius:12px;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="arena">
+
+    <div id="river"></div>
+    <div class="bridge" id="bridge1"></div>
+    <div class="bridge" id="bridge2"></div>
+
+    <!-- أبراج العدو -->
+    <div class="tower" id="enemyKing">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>👑</b>
+    </div>
+
+    <div class="tower" id="enemyLeft">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>🏰</b>
+    </div>
+
+    <div class="tower" id="enemyRight">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>🏰</b>
+    </div>
+
+    <!-- أبراج اللاعب -->
+    <div class="tower" id="myKing">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>👑</b>
+    </div>
+
+    <div class="tower" id="myLeft">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>🏰</b>
+    </div>
+
+    <div class="tower" id="myRight">
+      <div class="roof"></div>
+      <div class="hp"><span></span></div>
+      <b>🏰</b>
+    </div>
+
+  </div>
+
+  <div id="topUI">
+    <div class="info">👑 المستوى 1</div>
+    <div class="info">🏆 0</div>
+  </div>
+
+  <div id="message"></div>
+  <button id="restart" onclick="location.reload()">إعادة اللعب</button>
+
+  <div id="elixirBox">
+    <div id="elixir"></div>
+    <div id="elixirText">5 / 10 ⚡</div>
+  </div>
+
+  <div id="cards">
+
+    <div class="card" data-cost="3" data-type="knight">
+      <div class="cost">3</div>
+      <div class="emoji">⚔️</div>
+      <small>فارس</small>
+    </div>
+
+    <div class="card" data-cost="2" data-type="archer">
+      <div class="cost">2</div>
+      <div class="emoji">🏹</div>
+      <small>رامي</small>
+    </div>
+
+    <div class="card" data-cost="4" data-type="giant">
+      <div class="cost">4</div>
+      <div class="emoji">🛡️</div>
+      <small>عملاق</small>
+    </div>
+
+    <div class="card" data-cost="3" data-type="mage">
+      <div class="cost">3</div>
+      <div class="emoji">🧙</div>
+      <small>ساحر</small>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+let elixir = 5;
+let selectedCard = null;
+let gameOver = false;
+
+const units = [];
+
+const types = {
+  knight:{
+    cost:3,
+    hp:220,
+    damage:35,
+    speed:1.2,
+    emoji:"⚔️"
+  },
+  archer:{
+    cost:2,
+    hp:100,
+    damage:22,
+    speed:0.9,
+    emoji:"🏹"
+  },
+  giant:{
+    cost:4,
+    hp:450,
+    damage:45,
+    speed:0.55,
+    emoji:"🛡️"
+  },
+  mage:{
+    cost:3,
+    hp:150,
+    damage:40,
+    speed:0.8,
+    emoji:"🧙"
+  }
+};
+
+const cards = document.querySelectorAll(".card");
+
+cards.forEach(card=>{
+  card.addEventListener("click",()=>{
+
+    if(gameOver) return;
+
+    const cost = Number(card.dataset.cost);
+
+    if(elixir < cost){
+      return;
+    }
+
+    cards.forEach(c=>c.classList.remove("selected"));
+
+    card.classList.add("selected");
+    selectedCard = card.dataset.type;
+
+  });
+});
+
+document.getElementById("arena").addEventListener("click",e=>{
+
+  if(!selectedCard || gameOver) return;
+
+  if(e.target.closest(".tower")) return;
+
+  const data = types[selectedCard];
+
+  if(elixir < data.cost) return;
+
+  elixir -= data.cost;
+  updateElixir();
+
+  const rect = document.getElementById("arena").getBoundingClientRect();
+
+  const x = e.clientX - rect.left - 21;
+  const y = e.clientY - rect.top - 21;
+
+  createUnit(
+    selectedCard,
+    x,
+    y,
+    "player"
+  );
+
+  cards.forEach(c=>c.classList.remove("selected"));
+  selectedCard=null;
+
+});
+
+/* إنشاء وحدة */
+
+function createUnit(type,x,y,team){
+
+  const data=types[type];
+
+  const unit=document.createElement("div");
+
+  unit.className="unit "+team;
+
+  unit.innerHTML=`
+    <div class="unitHp">
+      <span style="width:100%"></span>
+    </div>
+    ${data.emoji}
+  `;
+
+  unit.style.left=x+"px";
+  unit.style.top=y+"px";
+
+  document.getElementById("arena").appendChild(unit);
+
+  const obj={
+    el:unit,
+    type:type,
+    team:team,
+    x:x,
+    y:y,
+    hp:data.hp,
+    maxHp:data.hp,
+    damage:data.damage,
+    speed:data.speed,
+    lastAttack:0
+  };
+
+  units.push(obj);
+}
+
+/* تجدد الإكسير */
+
+setInterval(()=>{
+
+  if(gameOver)return;
+
+  if(elixir<10){
+    elixir+=0.15;
+
+    if(elixir>10)
+      elixir=10;
+
+    updateElixir();
+  }
+
+},1000);
+
+/* العدو */
+
+setInterval(()=>{
+
+  if(gameOver)return;
+
+  const list=["knight","archer","giant","mage"];
+
+  const type=list[Math.floor(Math.random()*list.length)];
+
+  const data=types[type];
+
+  createUnit(
+    type,
+    Math.random()*window.innerWidth*0.6 + 40,
+    30,
+    "enemy"
+  );
+
+},5000);
+
+/* تحديث اللعبة */
+
+function gameLoop(){
+
+  if(gameOver){
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  units.forEach((u,i)=>{
+
+    if(!u.el.parentNode) return;
+
+    let target=null;
+    let minDist=99999;
+
+    units.forEach(v=>{
+
+      if(v.team===u.team) return;
+
+      const dx=v.x-u.x;
+      const dy=v.y-u.y;
+
+      const dist=Math.sqrt(dx*dx+dy*dy);
+
+      if(dist<minDist){
+        minDist=dist;
+        target=v;
+      }
+
+    });
+
+    /* مهاجمة وحدة */
+
+    if(target && minDist<55){
+
+      const now=Date.now();
+
+      if(now-u.lastAttack>800){
+
+        target.hp-=u.damage;
+        u.lastAttack=now;
+
+        updateUnitHealth(target);
+
+      }
+
+    }else{
+
+      /* التحرك */
+
+      if(u.team==="player"){
+        u.y-=u.speed;
+      }else{
+        u.y+=u.speed;
+      }
+
+      u.el.style.left=u.x+"px";
+      u.el.style.top=u.y+"px";
+    }
+
+    /* وصل إلى جهة البرج */
+
+    if(u.team==="player" && u.y<40){
+      damageTower("enemyKing",u.damage);
+      removeUnit(u);
+    }
+
+    if(u.team==="enemy" && u.y>document.getElementById("arena").clientHeight-80){
+      damageTower("myKing",u.damage);
+      removeUnit(u);
+    }
+
+    /* موت الوحدة */
+
+    if(u.hp<=0){
+      removeUnit(u);
+    }
+
+  });
+
+  requestAnimationFrame(gameLoop);
+}
+
+function updateUnitHealth(u){
+
+  if(!u.el.parentNode)return;
+
+  const bar=u.el.querySelector(".unitHp span");
+
+  bar.style.width=
+    Math.max(0,(u.hp/u.maxHp)*100)+"%";
+
+}
+
+function removeUnit(u){
+
+  if(u.el.parentNode)
+    u.el.remove();
+
+  const index=units.indexOf(u);
+
+  if(index>=0)
+    units.splice(index,1);
+}
+
+/* ضرب الأبراج */
+
+function damageTower(id,damage){
+
+  const tower=document.getElementById(id);
+
+  if(!tower) return;
+
+  let hp=Number(tower.dataset.hp || 1000);
+
+  hp-=damage;
+
+  tower.dataset.hp=hp;
+
+  const bar=tower.querySelector(".hp span");
+
+  bar.style.width=Math.max(0,hp/1000*100)+"%";
+
+  if(hp<=0){
+
+    tower.style.opacity="0.35";
+
+    if(id==="enemyKing"){
+      endGame("🏆 انتصرت!");
+    }
+
+    if(id==="myKing"){
+      endGame("💀 خسرت!");
+    }
+
+  }
+
+}
+
+function updateElixir(){
+
+  document.getElementById("elixir").style.width=
+    (elixir*10)+"%";
+
+  document.getElementById("elixirText").textContent=
+    Math.floor(elixir)+" / 10 ⚡";
+
+}
+
+function endGame(text){
+
+  gameOver=true;
+
+  const msg=document.getElementById("message");
+
+  msg.textContent=text;
+  msg.style.display="block";
+
+  document.getElementById("restart").style.display="block";
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
